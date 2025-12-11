@@ -548,17 +548,24 @@
   grid-template-columns: auto 1fr;
   gap: 10px;
   align-items: start;
-  background: rgba(247, 199, 104, 0.12);
-  border: 1px solid var(--bmi-border);
-  border-radius: 14px;
-  padding: 12px 14px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 16px 18px;
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.22);
+}
+
+.theme-light .recommendation {
+  background: linear-gradient(145deg, #ffffff, #e9f2ff);
+  border-color: var(--stroke);
+  box-shadow: 0 14px 32px rgba(15, 23, 42, 0.1);
 }
 
 .rec-icon {
   width: 32px;
   height: 32px;
   border-radius: 50%;
-  background: rgba(255, 255, 255, 0.12);
+  background: rgba(59, 130, 246, 0.14);
   display: grid;
   place-items: center;
   font-size: 18px;
@@ -570,10 +577,18 @@
   color: var(--bmi-text);
 }
 
+.theme-light .rec-title {
+  color: var(--text);
+}
+
 .rec-text {
   color: var(--bmi-muted);
   font-size: 14px;
   margin-bottom: 6px;
+}
+
+.theme-light .rec-text {
+  color: var(--muted);
 }
 
 .rec-btn {
@@ -581,9 +596,22 @@
   color: #e2e8f0;
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
-  padding: 10px 14px;
+  padding: 12px 16px;
   font-weight: 700;
   cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.rec-btn:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.24);
+}
+
+.theme-light .rec-btn {
+  background: linear-gradient(135deg, var(--accent), var(--highlight));
+  color: #0b1f3d;
+  border-color: rgba(59, 130, 246, 0.2);
+  box-shadow: 0 10px 22px rgba(59, 130, 246, 0.14);
 }
 
 .chart-cards {
