@@ -1,71 +1,72 @@
-# Getting Started with Create React App
+# HealthMate – Trung tâm Quản lý Sức khỏe Cá nhân
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+**Truy cập:** HealthMate Dashboard (GitHub Pages)  
+**Mô tả:** Ứng dụng web giúp tính BMI/BMR, vùng nhịp tim, theo dõi nước/ngủ/vận động và lưu dữ liệu ngay trên trình duyệt. Không cần tài khoản hay backend.
 
-## Available Scripts
+## Công nghệ sử dụng
+- React 19, React Router
+- Bootstrap 5
+- Lưu trữ cục bộ bằng `localStorage` (không server)
 
-In the project directory, you can run:
+## Cấu trúc dự án
+```
+src
+├─ components
+│  ├─ HealthTracker.js        # BMI/BMR + lưu lịch sử
+│  ├─ BMRCalculator.js        # Tính BMR (Mifflin-St Jeor)
+│  ├─ HeartRateCalculator.js  # Vùng nhịp tim tập luyện
+│  ├─ WellnessDashboard.js    # Nước, giấc ngủ, vận động
+│  ├─ AuthModal.js / Profile.js (mock)
+│  └─ styles/*.css
+├─ context
+│  ├─ AuthContext.js          # Lưu trạng thái đăng nhập giả lập
+│  └─ ToastContext.js         # Thông báo ngắn
+├─ App.js                     # Định tuyến và layout chính
+└─ index.js                   # Bootstrap ứng dụng
+```
 
-### `npm start`
+## Các chức năng chính
+1. **Kiểm tra & tính toán**
+   - BMI, BMR, vùng nhịp tim (50–85%) theo Mifflin-St Jeor.
+2. **Theo dõi sức khỏe**
+   - Dashboard nước, ngủ, vận động; ghi chú nhanh; nhắc việc trong ngày.
+3. **Lưu trữ cục bộ**
+   - Lưu lịch sử trên trình duyệt, không gửi dữ liệu ra ngoài.
+4. **Giao diện tiếng Việt**
+   - Luồng thao tác nhanh, xem kết quả tức thì.
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+## Luồng hoạt động
+1. Mở trang chủ → chọn công cụ (BMI/BMR/nhịp tim) hoặc Dashboard.  
+2. Nhập số liệu → xem kết quả ngay trên card.  
+3. Lưu hoặc chỉnh sửa ghi chú/nước/ngủ/vận động trong Dashboard.  
+4. Dữ liệu tự lưu vào `localStorage`; làm mới trang vẫn giữ.  
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
+## Chạy cục bộ
+```bash
+npm install
+npm start
+```
+Ứng dụng mở tại `http://localhost:3000`.
 
-### `npm test`
+## Build sản phẩm
+```bash
+npm run build
+```
+Đóng gói tại thư mục `build/`.
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+## Triển khai GitHub Pages
+`package.json` đã có `homepage`.
+```bash
+npm run deploy
+```
+Sau đó vào GitHub → Settings → Pages → Source: chọn nhánh `gh-pages` (root).  
+Link công khai: `https://turretsz.github.io/health-mate`.
 
-### `npm run build`
+## Ghi chú dữ liệu
+- Chỉ lưu trên máy người dùng; xóa cache/trình duyệt sẽ mất dữ liệu.
+- Không thu thập hay gửi ra ngoài.
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
-# health-mate
+## Quy trình cập nhật
+1) Sửa mã → `git add -A` → `git commit -m "..."` → `git push`  
+2) Deploy lại: `npm run deploy`  
+3) Kiểm tra link GitHub Pages.
