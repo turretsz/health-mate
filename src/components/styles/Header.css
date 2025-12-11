@@ -151,6 +151,17 @@
   background: rgba(14, 165, 233, 0.12);
 }
 
+.nav-link.locked {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.nav-link.locked:hover {
+  background: none;
+  border-color: transparent;
+  color: inherit;
+}
+
 .header-actions {
   display: inline-flex;
   align-items: center;

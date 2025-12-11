@@ -1,10 +1,12 @@
 // src/components/HealthTools.js
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
+import { useToast } from '../context/ToastContext';
 import './styles/HealthTools.css';
 
-const HealthTools = () => {
+const HealthTools = ({ featureFlags = {} }) => {
+  const { notify } = useToast();
   const [tools, setTools] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -63,26 +65,50 @@ const HealthTools = () => {
     };
   }, [apiBase, assetBase]);
 
+  const lockedPaths = useMemo(
+    () => ({
+      '/bmr': !featureFlags.bmr,
+      '/heart-rate': !featureFlags.heart,
+      '/dashboard': !featureFlags.dashboard,
+    }),
+    [featureFlags],
+  );
+  const handleToolClick = (tool) => (e) => {
+    if (lockedPaths[tool.link]) {
+      e.preventDefault();
+      notify('Chức năng đang phát triển, vui lòng quay lại sau.', { type: 'info' });
+    }
+  };
+
   return (
     <div className="tools-grid">
       {error && <div className="tool-error">{error}</div>}
       {isLoading && <div className="tool-loading">Đang tải công cụ...</div>}
-      {tools.map((tool) => (
-        <Link key={tool.title} to={tool.link} className="tool-card">
-          <div className="tool-top">
-            <div className="tool-icon">
-              <img src={tool.icon} alt={tool.title} className="tool-icon-img" />
-            </div>
+      {tools.map((tool) => {
+        const isLocked = lockedPaths[tool.link];
+        return (
+          <Link
+            key={tool.title}
+            to={tool.link}
+            className={`tool-card ${isLocked ? 'tool-locked' : ''}`}
+            onClick={handleToolClick(tool)}
+            aria-disabled={isLocked}
+          >
+            <div className="tool-top">
+              <div className="tool-icon">
+                <img src={tool.icon} alt={tool.title} className="tool-icon-img" />
+              </div>
             <span className="tool-badge">{tool.badge}</span>
-          </div>
-          <div className="tool-title">{tool.title}</div>
-          <p className="tool-description">{tool.description}</p>
-          <div className="tool-footer">
-            <span className="tool-cta">Mở công cụ</span>
+            </div>
+            <div className="tool-title">{tool.title}</div>
+            <p className="tool-description">{tool.description}</p>
+            <div className="tool-footer">
+            <span className="tool-cta">{isLocked ? 'Đang phát triển' : 'Mở công cụ'}</span>
             <span className="tool-arrow">→</span>
-          </div>
-        </Link>
-      ))}
+            </div>
+          </Link>
+        );
+      })}
     </div>
   );
 };

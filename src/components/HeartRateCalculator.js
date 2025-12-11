@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import './styles/HeartRateCalculator.css';
 
+const HR_STORAGE = 'hm_hr_logs';
 const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
 
 const calculateAge = (dob) => {
@@ -60,6 +61,7 @@ const HeartRateCalculator = () => {
   }, [maxHeartRate]);
 
   const handleSubmit = () => {
+    window.dispatchEvent(new CustomEvent('hm-busy', { detail: { duration: 600 } }));
     if (!birthDate || !resting || resting <= 0) {
       notify('Vui lòng nhập ngày sinh và nhịp tim nghỉ ngơi.', { type: 'warning' });
       return;
@@ -69,6 +71,28 @@ const HeartRateCalculator = () => {
       return;
     }
     setShowResult(true);
+    if (isSelf && user?.id && maxHeartRate && zones) {
+      try {
+        const payload = {
+          bpm: resting,
+          max: maxHeartRate,
+          moderate: `${zones.moderateMin}-${zones.moderateMax} bpm`,
+          vigorous: `${zones.vigorousMin}-${zones.vigorousMax} bpm`,
+          zone: 'Vận động',
+          duration: '',
+          mode: 'cardio',
+          ts: Date.now(),
+        };
+        const raw = localStorage.getItem(HR_STORAGE);
+        const parsed = raw ? JSON.parse(raw) : {};
+        const list = Array.isArray(parsed[user.id]) ? parsed[user.id] : [];
+        const next = [payload, ...list].slice(0, 30);
+        localStorage.setItem(HR_STORAGE, JSON.stringify({ ...parsed, [user.id]: next }));
+        window.dispatchEvent(new Event('hm-data-updated'));
+      } catch (err) {
+        // ignore storage errors
+      }
+    }
   };
 
   return (

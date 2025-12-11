@@ -1,6 +1,6 @@
 // src/App.js
-import React, { useEffect, useState } from 'react';
-import { Routes, Route, Link } from 'react-router-dom';
+import React, { useCallback, useEffect, useState } from 'react';
+import { Routes, Route, Link, useLocation } from 'react-router-dom';
 import Header from './components/Header';
 import ToolCards from './components/HealthTools';
 import ToolSection from './components/ToolSection';
@@ -10,12 +10,22 @@ import HeartRateCalculator from './components/HeartRateCalculator';
 import WellnessDashboard from './components/WellnessDashboard';
 import AuthModal from './components/AuthModal';
 import { AuthProvider } from './context/AuthContext';
-import { ToastProvider } from './context/ToastContext';
+import { ToastProvider, useToast } from './context/ToastContext';
 import './components/styles/Header.css';
 import './App.css';
 import Profile from './components/Profile';
+import { useAuth } from './context/AuthContext';
 
-const HomePage = () => (
+const FEATURE_KEY = 'hm_feature_flags';
+const defaultFeatures = { dashboard: false, bmr: false, heart: false };
+
+const HomePage = ({ onLockedClick, bmiSnapshot, bmrSnapshot, hrSnapshot, statusSnapshot, actions, featureFlags }) => {
+  const canDashboard = !!featureFlags?.dashboard;
+  const canBmr = !!featureFlags?.bmr;
+  const canHeart = !!featureFlags?.heart;
+  const showActions = canDashboard && actions?.length;
+
+  return (
   <div className="app-shell">
     <section className="hero-shell">
       <div className="page-width hero-grid">
@@ -30,9 +40,9 @@ const HomePage = () => (
             Một bảng điều khiển duy nhất cho BMI, BMR, nhịp tim, lịch uống nước và hành trình luyện tập. Tất cả được gom vào luồng thao tác nhanh, nhìn là hiểu, làm là xong.
           </p>
           <div className="hero-actions">
-            <Link to="/dashboard" className="btn btn-primary">Mở bảng điều khiển</Link>
+            <Link to="/dashboard" onClick={!canDashboard ? onLockedClick : undefined} className="btn btn-primary">Mở bảng điều khiển</Link>
             <Link to="/health-tracker" className="btn btn-ghost">Kiểm tra BMI</Link>
-            <div className="micro-badge">Lưu cục bộ • Không cần tạo tài khoản</div>
+            <div className="micro-badge">Đăng nhập để đồng bộ • Lưu online</div>
           </div>
           <div className="hero-pills">
             <span className="hero-pill accent">3 bước • Điền số liệu</span>
@@ -43,18 +53,20 @@ const HomePage = () => (
             <div className="hero-metrics-grid">
               <div className="metric-card large">
                 <div className="metric-label">Luồng chính</div>
-                <div className="metric-value">Đăng nhập • Hồ sơ • BMI</div>
-                <p className="metric-note">Chỉ giữ lại các màn hình cốt lõi để kiểm thử ổn định.</p>
+                <div className="metric-value">Chỉ số & hồ sơ sức khỏe</div>
+                <p className="metric-note">Tập trung vào BMI, nhịp tim, nhật ký để theo dõi sức khỏe.</p>
               </div>
               <div className="metric-card">
                 <div className="metric-label">BMI nhanh</div>
-                <div className="metric-value accent">21.8</div>
-                <p className="metric-note">Nhập chiều cao/cân nặng và xem ngay kết quả.</p>
+                <div className="metric-value accent">{bmiSnapshot?.value ?? '--'}</div>
+                <p className="metric-note">
+                  {bmiSnapshot?.note || 'Nhập chiều cao/cân nặng và xem ngay kết quả.'}
+                </p>
               </div>
               <div className="metric-card">
                 <div className="metric-label">Hồ sơ</div>
                 <div className="metric-value accent">Thông tin cá nhân</div>
-                <p className="metric-note">Cập nhật lưu cục bộ, không cần backend.</p>
+                <p className="metric-note">Cập nhật và đồng bộ thông tin khi bạn đăng nhập.</p>
               </div>
             </div>
         </div>
@@ -72,26 +84,26 @@ const HomePage = () => (
             <div className="insight-grid">
               <div className="insight-card highlight">
                 <div className="insight-label">BMI</div>
-                <div className="insight-value">21.8</div>
-                <p className="insight-note">Ổn định 6 ngày • cân bằng</p>
+                <div className="insight-value">{bmiSnapshot?.value ?? '--'}</div>
+                <p className="insight-note">{bmiSnapshot?.note || 'Hãy đo BMI để đồng bộ tài khoản.'}</p>
                 <div className="bar">
-                  <span style={{ width: '72%' }} />
+                  <span style={{ width: `${bmiSnapshot?.barWidth ?? 0}%` }} />
                 </div>
               </div>
               <div className="insight-card">
                 <div className="insight-label">BMR</div>
-                <div className="insight-value">1,480 kcal</div>
-                <p className="insight-note">Khuyến nghị ăn duy trì: 1,980 kcal</p>
+                <div className="insight-value">{canBmr ? (bmrSnapshot?.value || '~') : '~'}</div>
+                <p className="insight-note">{canBmr ? (bmrSnapshot?.note || 'Chưa có dữ liệu.') : 'Chức năng đang khóa.'}</p>
               </div>
               <div className="insight-card">
                 <div className="insight-label">Nhịp tim</div>
-                <div className="insight-value">134 bpm</div>
-                <p className="insight-note">Zone 3 • 26 phút • cardio/HIIT</p>
+                <div className="insight-value">{canHeart ? (hrSnapshot?.value || '~') : '~'}</div>
+                <p className="insight-note">{canHeart ? (hrSnapshot?.note || 'Chưa có dữ liệu.') : 'Chức năng đang khóa.'}</p>
               </div>
               <div className="insight-card secondary">
                 <div className="insight-label">Trạng thái</div>
-                <div className="insight-value">On track</div>
-                <p className="insight-note">92% mục tiêu tuần</p>
+                <div className="insight-value">{canDashboard ? (statusSnapshot?.value || '~') : '~'}</div>
+                <p className="insight-note">{canDashboard ? (statusSnapshot?.note || 'Chưa có dữ liệu.') : 'Chức năng đang khóa.'}</p>
               </div>
             </div>
           </div>
@@ -102,30 +114,18 @@ const HomePage = () => (
                 <p className="panel-subtitle">Nhật ký mới nhất</p>
                 <div className="panel-title">Bảng lịch hành động</div>
               </div>
-              <Link to="/dashboard" className="link-inline">Mở nhật ký</Link>
+              <Link to="/dashboard" onClick={onLockedClick} className="link-inline">Mở nhật ký</Link>
             </div>
             <div className="session-list">
-              <div className="session-row">
-                <div>
-                  <div className="session-name">Chạy bộ buổi sáng</div>
-                  <p className="session-note">45 phút • 6.2 km • Zone 2-3</p>
+              {(showActions ? actions : [{ name: '~', note: 'Nhật ký đang khóa, chưa có dữ liệu.', delta: '~' }]).map((item, idx) => (
+                <div className="session-row" key={`${item.name}-${idx}`}>
+                  <div>
+                    <div className="session-name">{item.name || '~'}</div>
+                    <p className="session-note">{item.note || 'Chưa có dữ liệu.'}</p>
+                  </div>
+                  <span className="session-chip neutral">{item.delta || '~'}</span>
                 </div>
-                <span className="session-chip">−420 kcal</span>
-              </div>
-              <div className="session-row">
-                <div>
-                  <div className="session-name">Bữa trưa nhẹ</div>
-                  <p className="session-note">Carb 55% • Protein 25% • Fat 20%</p>
-                </div>
-                <span className="session-chip neutral">+640 kcal</span>
-              </div>
-              <div className="session-row">
-                <div>
-                  <div className="session-name">Stretching & mobility</div>
-                  <p className="session-note">20 phút • Giảm căng cơ sau cardio</p>
-                </div>
-                <span className="session-chip">−110 kcal</span>
-              </div>
+              ))}
             </div>
           </div>
         </div>
@@ -221,17 +221,193 @@ const HomePage = () => (
             </p>
           </div>
           <div className="cta-actions">
-            <Link to="/dashboard" className="btn btn-primary">Mở bảng điều khiển</Link>
-            <Link to="/bmr" className="btn btn-ghost">Tính BMR ngay</Link>
+            <Link to="/dashboard" onClick={onLockedClick} className="btn btn-primary">Mở bảng điều khiển</Link>
+            <Link to="/bmr" onClick={onLockedClick} className="btn btn-ghost">Tính BMR ngay</Link>
           </div>
         </div>
       </div>
     </section>
   </div>
+  );
+};
+
+const LockedFeature = ({ label }) => (
+  <div className="locked-feature">
+    <div className="page-width">
+      <div className="locked-card">
+        <h1>{label} đang phát triển</h1>
+        <p>Chức năng này đang được hoàn thiện. Vui lòng quay lại sau.</p>
+        <Link to="/" className="btn btn-primary">Về trang chủ</Link>
+      </div>
+    </div>
+  </div>
 );
 
-function App() {
+function AppShell() {
+  const { notify } = useToast();
+  const { user } = useAuth();
   const [theme, setTheme] = useState(() => localStorage.getItem('hm_theme') || 'dark');
+  const { pathname } = useLocation();
+  const [isRouting, setIsRouting] = useState(false);
+  const [isBusy, setIsBusy] = useState(false);
+  const [featureFlags, setFeatureFlags] = useState(() => {
+    try {
+      const raw = localStorage.getItem(FEATURE_KEY);
+      return raw ? { ...defaultFeatures, ...JSON.parse(raw) } : defaultFeatures;
+    } catch (err) {
+      return defaultFeatures;
+    }
+  });
+  const [snapshots, setSnapshots] = useState({
+    bmi: null,
+    bmr: null,
+    hr: null,
+    status: null,
+    actions: [
+      { name: '~', note: 'Nhật ký đang khóa, chưa có dữ liệu.', delta: '~' },
+    ],
+  });
+  const handleLockedClick = useCallback((e) => {
+    e.preventDefault();
+    notify('Chức năng đang phát triển, vui lòng quay lại sau.', { type: 'info' });
+  }, [notify]);
+
+  const handleFeatureToggle = useCallback((key, value) => {
+    setFeatureFlags((prev) => {
+      const next = { ...prev, [key]: value };
+      localStorage.setItem(FEATURE_KEY, JSON.stringify(next));
+      return next;
+    });
+  }, []);
+
+  const classifyBmi = useCallback((value) => {
+    const bmiNum = parseFloat(value);
+    if (!bmiNum) return { label: 'Chưa có dữ liệu', note: 'Hãy đo BMI để xem gợi ý.', barWidth: 0 };
+    if (bmiNum < 18.5) return { label: 'Thiếu cân', note: 'Tăng nhẹ khẩu phần và tập sức mạnh.', barWidth: Math.min(100, Math.max(10, (bmiNum / 35) * 100)) };
+    if (bmiNum < 23) return { label: 'Khỏe mạnh', note: 'Duy trì dinh dưỡng cân bằng và ngủ đủ.', barWidth: Math.min(100, Math.max(10, (bmiNum / 35) * 100)) };
+    if (bmiNum < 25) return { label: 'Thừa cân nhẹ', note: 'Ưu tiên cardio nhẹ và kiểm soát khẩu phần.', barWidth: Math.min(100, Math.max(10, (bmiNum / 35) * 100)) };
+    if (bmiNum < 30) return { label: 'Béo phì độ 1', note: 'Cắt giảm calo rỗng, tăng vận động và ngủ sớm.', barWidth: Math.min(100, Math.max(10, (bmiNum / 35) * 100)) };
+    return { label: 'Béo phì độ 2+', note: 'Tham vấn chuyên gia, thiết lập kế hoạch dinh dưỡng và vận động an toàn.', barWidth: 100 };
+  }, []);
+
+  const formatNumber = (num, digits = 0, suffix = '') => {
+    if (num === null || num === undefined || Number.isNaN(num)) return '~';
+    return `${Number(num).toLocaleString('vi-VN', { maximumFractionDigits: digits })}${suffix}`;
+  };
+
+  const loadSnapshots = useCallback(() => {
+    if (!user?.id) {
+      setSnapshots((prev) => ({
+        ...prev,
+        bmi: null,
+        bmr: null,
+        hr: null,
+        status: null,
+        actions: [{ name: '~', note: 'Nhật ký đang khóa, chưa có dữ liệu.', delta: '~' }],
+      }));
+      return;
+    }
+    try {
+      const rawBmi = localStorage.getItem('hm_bmi_logs');
+      const rawBmr = localStorage.getItem('hm_bmr_logs');
+      const rawHr = localStorage.getItem('hm_hr_logs');
+      const rawStatus = localStorage.getItem('hm_status_snapshot');
+      const rawActions = localStorage.getItem('hm_action_logs');
+
+      const bmiMap = rawBmi ? JSON.parse(rawBmi) : {};
+      const bmrMap = rawBmr ? JSON.parse(rawBmr) : {};
+      const hrMap = rawHr ? JSON.parse(rawHr) : {};
+      const statusMap = rawStatus ? JSON.parse(rawStatus) : {};
+      const actionsMap = rawActions ? JSON.parse(rawActions) : {};
+
+      const latestBmi = Array.isArray(bmiMap[user.id]) ? bmiMap[user.id][0] : null;
+      const latestBmr = Array.isArray(bmrMap[user.id]) ? bmrMap[user.id][0] : null;
+      const latestHr = Array.isArray(hrMap[user.id]) ? hrMap[user.id][0] : null;
+      const statusSnap = statusMap[user.id] || null;
+      const actionsList = Array.isArray(actionsMap[user.id]) ? actionsMap[user.id].slice(0, 3) : [];
+
+      const bmiMeta = latestBmi ? classifyBmi(latestBmi.bmi) : null;
+
+      setSnapshots({
+        bmi: latestBmi
+          ? {
+              value: latestBmi.bmi,
+              note: `${bmiMeta?.label ?? '---'} • ${bmiMeta?.note ?? ''}`.trim(),
+              barWidth: bmiMeta?.barWidth ?? 0,
+            }
+          : null,
+        bmr: latestBmr
+          ? {
+              value: formatNumber(latestBmr.bmr, 0, ' kcal'),
+              note: `TDEE: ${formatNumber(latestBmr.tdee, 0, ' kcal')}${latestBmr.activityLabel ? ` • ${latestBmr.activityLabel}` : ''}`,
+            }
+          : null,
+        hr: latestHr
+          ? {
+              value: formatNumber(latestHr.bpm, 0, ' bpm'),
+              note: `${latestHr.zone || '---'}${latestHr.duration ? ` • ${latestHr.duration}` : ''}${latestHr.mode ? ` • ${latestHr.mode}` : ''}`,
+            }
+          : null,
+        status: statusSnap
+          ? {
+              value: statusSnap.label || 'On track',
+              note: statusSnap.note || 'Đang đồng bộ dữ liệu.',
+            }
+          : null,
+        actions: actionsList.length
+          ? actionsList
+          : [{ name: '~', note: 'Nhật ký đang khóa, chưa có dữ liệu.', delta: '~' }],
+      });
+    } catch (err) {
+      setSnapshots((prev) => ({
+        ...prev,
+        bmi: null,
+        bmr: null,
+        hr: null,
+        status: null,
+        actions: [{ name: '~', note: 'Nhật ký đang khóa, chưa có dữ liệu.', delta: '~' }],
+      }));
+    }
+  }, [user, classifyBmi]);
+
+  useEffect(() => {
+    setIsRouting(true);
+    const timeout = setTimeout(() => setIsRouting(false), 450);
+    return () => clearTimeout(timeout);
+  }, [pathname]);
+
+  useEffect(() => {
+    const handleBusy = (e) => {
+      const duration = e?.detail?.duration ?? 500;
+      setIsBusy(true);
+      setTimeout(() => setIsBusy(false), duration);
+    };
+    window.addEventListener('hm-busy', handleBusy);
+    return () => window.removeEventListener('hm-busy', handleBusy);
+  }, []);
+
+  useEffect(() => {
+    loadSnapshots();
+    const onStorage = (e) => {
+      if (['hm_bmi_logs', 'hm_bmr_logs', 'hm_hr_logs', 'hm_status_snapshot', 'hm_action_logs'].includes(e.key)) {
+        loadSnapshots();
+      }
+      if (e.key === FEATURE_KEY && e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          setFeatureFlags({ ...defaultFeatures, ...parsed });
+        } catch (err) {
+          setFeatureFlags(defaultFeatures);
+        }
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('hm-data-updated', loadSnapshots);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('hm-data-updated', loadSnapshots);
+    };
+  }, [loadSnapshots]);
 
   useEffect(() => {
     localStorage.setItem('hm_theme', theme);
@@ -240,23 +416,66 @@ function App() {
   const toggleTheme = () => setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
 
   return (
+    <div className={`font-sans theme-${theme}`}>
+      <Header theme={theme} toggleTheme={toggleTheme} featureFlags={featureFlags} />
+      <div className="page-transition">
+        <Routes>
+          <Route
+            path="/"
+            element={(
+              <HomePage
+                onLockedClick={handleLockedClick}
+                bmiSnapshot={snapshots.bmi}
+                bmrSnapshot={snapshots.bmr}
+                hrSnapshot={snapshots.hr}
+                statusSnapshot={snapshots.status}
+                actions={snapshots.actions}
+                featureFlags={featureFlags}
+              />
+            )}
+          />
+          <Route
+            path="/dashboard"
+            element={featureFlags.dashboard ? <WellnessDashboard /> : <LockedFeature label="Nhật ký" />}
+          />
+          <Route path="/health-tracker" element={<HealthTracker />} />
+          <Route path="/bmr" element={featureFlags.bmr ? <BMRCalculator /> : <LockedFeature label="BMR & TDEE" />} />
+          <Route path="/heart-rate" element={featureFlags.heart ? <HeartRateCalculator /> : <LockedFeature label="Nhịp tim" />} />
+          <Route path="/profile" element={<Profile featureFlags={featureFlags} onToggleFeature={handleFeatureToggle} />} />
+          <Route
+            path="*"
+            element={(
+              <HomePage
+                onLockedClick={handleLockedClick}
+                bmiSnapshot={snapshots.bmi}
+                bmrSnapshot={snapshots.bmr}
+                hrSnapshot={snapshots.hr}
+                statusSnapshot={snapshots.status}
+                actions={snapshots.actions}
+                featureFlags={featureFlags}
+              />
+            )}
+          />
+        </Routes>
+      </div>
+      <AuthModal />
+      <div className={`page-loader ${(isRouting || isBusy) ? 'show' : ''}`}>
+        <div className="loader-dots">
+          <span />
+          <span />
+          <span />
+        </div>
+        <div className="loader-label">Đang tải nội dung...</div>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  return (
     <AuthProvider>
       <ToastProvider>
-        <div className={`font-sans theme-${theme}`}>
-          <Header theme={theme} toggleTheme={toggleTheme} />
-          <div className="page-transition">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/dashboard" element={<WellnessDashboard />} />
-              <Route path="/health-tracker" element={<HealthTracker />} />
-              <Route path="/bmr" element={<BMRCalculator />} />
-              <Route path="/heart-rate" element={<HeartRateCalculator />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="*" element={<HomePage />} />
-            </Routes>
-          </div>
-          <AuthModal />
-        </div>
+        <AppShell />
       </ToastProvider>
     </AuthProvider>
   );

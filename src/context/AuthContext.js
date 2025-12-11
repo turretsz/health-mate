@@ -3,7 +3,16 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 
 const SESSION_KEY = 'hm_session';
 const USERS_KEY = 'hm_users';
-const DATA_KEYS = ['hm_water_logs', 'hm_sleep_logs', 'hm_activity_logs'];
+const DATA_KEYS = [
+  'hm_water_logs',
+  'hm_sleep_logs',
+  'hm_activity_logs',
+  'hm_bmi_logs',
+  'hm_bmr_logs',
+  'hm_hr_logs',
+  'hm_action_logs',
+  'hm_status_snapshot',
+];
 const seedUsers = [
   { id: 1, name: 'Lan', email: 'lan@example.com', password: '123456', gender: 'female', birthDate: '1995-01-01', plan: 'Free' },
   { id: 2, name: 'Minh', email: 'minh@example.com', password: '123456', gender: 'male', birthDate: '1992-02-02', plan: 'Pro' },

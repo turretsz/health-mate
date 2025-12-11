@@ -2,18 +2,17 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useToast } from '../context/ToastContext';
 import './styles/Header.css';
 
-const navLinks = [
-  { to: '/dashboard', label: 'Nhật ký' },
-  { to: '/health-tracker', label: 'BMI' },
-  { to: '/bmr', label: 'BMR & TDEE' },
-  { to: '/heart-rate', label: 'Nhịp tim' },
-];
-
-const Header = ({ theme = 'dark', toggleTheme }) => {
+const Header = ({ theme = 'dark', toggleTheme, featureFlags = {} }) => {
   const { user, openAuth, logout } = useAuth();
+  const { notify } = useToast();
   const { pathname } = useLocation();
+  const handleLocked = (e) => {
+    e.preventDefault();
+    notify('Chức năng đang phát triển, vui lòng quay lại sau.', { type: 'info' });
+  };
 
   return (
     <header className="header glass-bar">
@@ -29,15 +28,36 @@ const Header = ({ theme = 'dark', toggleTheme }) => {
         </Link>
 
         <nav className="nav">
-          {navLinks.map((item) => (
-            <Link
-              key={item.to}
-              to={item.to}
-              className={`nav-link ${pathname === item.to ? 'active' : ''}`}
-            >
-              {item.label}
-            </Link>
-          ))}
+          {[
+            { to: '/', label: 'Trang chủ', locked: false },
+            { to: '/health-tracker', label: 'BMI', locked: false },
+            { to: '/profile', label: 'Hồ sơ', locked: false },
+            { to: '/dashboard', label: 'Nhật ký', locked: !featureFlags.dashboard },
+            { to: '/bmr', label: 'BMR & TDEE', locked: !featureFlags.bmr },
+            { to: '/heart-rate', label: 'Nhịp tim', locked: !featureFlags.heart },
+          ].map((item) => {
+            const isActive = pathname === item.to;
+            const classes = `nav-link ${isActive ? 'active' : ''} ${item.locked ? 'locked' : ''}`;
+            return item.locked ? (
+              <a
+                key={item.to}
+                href={item.to}
+                className={classes}
+                onClick={handleLocked}
+                aria-disabled="true"
+              >
+                {item.label}
+              </a>
+            ) : (
+              <Link
+                key={item.to}
+                to={item.to}
+                className={classes}
+              >
+                {item.label}
+              </Link>
+            );
+          })}
         </nav>
 
         <div className="header-actions">

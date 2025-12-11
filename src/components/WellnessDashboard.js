@@ -23,8 +23,12 @@ const reminderSchedule = {
 
 const readLocal = (key, fallback) => {
   try {
-    const data = JSON.parse(localStorage.getItem(key) || '[]');
-    return Array.isArray(data) && data.length ? data : fallback;
+    const raw = localStorage.getItem(key);
+    if (!raw) return fallback;
+    const data = JSON.parse(raw);
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === 'object') return data;
+    return fallback;
   } catch (e) {
     return fallback;
   }
@@ -92,6 +96,7 @@ const WellnessDashboard = () => {
 
   useEffect(() => {
     localStorage.setItem(storageKeyFor('reminders', userKey), JSON.stringify(reminders));
+    window.dispatchEvent(new Event('hm-data-updated'));
   }, [reminders, userKey]);
 
   useEffect(() => {
@@ -104,6 +109,7 @@ const WellnessDashboard = () => {
 
   useEffect(() => {
     localStorage.setItem(storageKeyFor('inbox', userKey), JSON.stringify(reminderInbox));
+    window.dispatchEvent(new Event('hm-data-updated'));
   }, [reminderInbox, userKey]);
 
   useEffect(() => {

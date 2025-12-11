@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './styles/Profile.css';
 
-const Profile = () => {
+const Profile = ({ featureFlags = {}, onToggleFeature }) => {
   const navigate = useNavigate();
   const { user, updateProfile, changePassword } = useAuth();
   const [form, setForm] = useState({
@@ -76,14 +76,17 @@ const Profile = () => {
           </div>
           <div className="profile-actions">
             <button className="profile-back" onClick={() => navigate('/')}>← Quay lại</button>
-            <button className="profile-edit" onClick={() => setEditing((prev) => !prev)}>
-              {editing ? 'Hủy' : 'Chỉnh sửa'}
-            </button>
           </div>
         </div>
 
         <div className="profile-grid">
           <div className="pane">
+            <div className="pane-head">
+              <p className="label">Hồ sơ</p>
+              <button className="profile-edit" onClick={() => setEditing((prev) => !prev)}>
+                {editing ? 'Hủy' : 'Chỉnh sửa'}
+              </button>
+            </div>
             {editing ? (
               <>
                 <label>
@@ -153,6 +156,23 @@ const Profile = () => {
             </label>
             <button onClick={handleChangePassword} disabled={saving}>Đổi mật khẩu</button>
           </div>
+
+          {user.role === 'admin' && (
+            <div className="pane">
+              <h3>Quyền mở khóa tính năng (Admin)</h3>
+              <p className="sub">Bật/tắt để cho phép tất cả tài khoản sử dụng.</p>
+              {['dashboard', 'bmr', 'heart'].map((key) => (
+                <label key={key} className="feature-toggle">
+                  <input
+                    type="checkbox"
+                    checked={!!featureFlags[key]}
+                    onChange={(e) => onToggleFeature?.(key, e.target.checked)}
+                  />
+                  <span>{key === 'dashboard' ? 'Nhật ký / Dashboard' : key === 'bmr' ? 'BMR & TDEE' : 'Nhịp tim'}</span>
+                </label>
+              ))}
+            </div>
+          )}
         </div>
 
         {message && <div className="banner success">{message}</div>}

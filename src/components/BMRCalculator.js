@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import './styles/BMRCalculator.css';
 
+const BMR_STORAGE = 'hm_bmr_logs';
 const activityLevels = [
   { label: 'Lối sống ít vận động (ít/không tập thể dục)', value: 1.2 },
   { label: 'Tập thể dục nhẹ (1-2 ngày/tuần)', value: 1.375 },
@@ -72,6 +73,7 @@ const BMRCalculator = () => {
   const MAX_WEIGHT = 250;
 
   const handleSubmit = () => {
+    window.dispatchEvent(new CustomEvent('hm-busy', { detail: { duration: 600 } }));
     const h = parseFloat(height);
     const w = parseFloat(weight);
     if (!birthDate || !h || !w) {
@@ -81,6 +83,30 @@ const BMRCalculator = () => {
     if (h < MIN_HEIGHT || h > MAX_HEIGHT || w < MIN_WEIGHT || w > MAX_WEIGHT) {
       notify(`Vui lòng nhập chiều cao (${MIN_HEIGHT}-${MAX_HEIGHT} cm) và cân nặng (${MIN_WEIGHT}-${MAX_WEIGHT} kg) trong giới hạn hợp lý.`, { type: 'warning' });
       return;
+    }
+    if (!bmr || !tdee) {
+      notify('Không tính được BMR. Vui lòng kiểm tra lại số liệu.', { type: 'warning' });
+      return;
+    }
+
+    if (isSelf && user?.id) {
+      try {
+        const payload = {
+          bmr: Math.round(bmr),
+          tdee: Math.round(tdee),
+          activity,
+          activityLabel,
+          ts: Date.now(),
+        };
+        const raw = localStorage.getItem(BMR_STORAGE);
+        const parsed = raw ? JSON.parse(raw) : {};
+        const list = Array.isArray(parsed[user.id]) ? parsed[user.id] : [];
+        const next = [payload, ...list].slice(0, 30);
+        localStorage.setItem(BMR_STORAGE, JSON.stringify({ ...parsed, [user.id]: next }));
+        window.dispatchEvent(new Event('hm-data-updated'));
+      } catch (err) {
+        // ignore storage errors
+      }
     }
     setShowResult(true);
   };

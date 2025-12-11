@@ -22,6 +22,17 @@
   box-shadow: 0 22px 60px rgba(127, 230, 196, 0.18);
 }
 
+.tool-card.tool-locked {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.tool-card.tool-locked:hover {
+  transform: none;
+  border-color: rgba(255, 255, 255, 0.07);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+}
+
 .tool-top {
   display: flex;
   align-items: center;

@@ -192,6 +192,71 @@
   color: var(--accent-strong);
 }
 
+.page-loader {
+  position: fixed;
+  inset: 0;
+  background: rgba(10, 16, 24, 0.68);
+  backdrop-filter: blur(10px);
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+  z-index: 80;
+}
+
+.theme-light .page-loader {
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.page-loader.show {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.loader-dots {
+  display: inline-flex;
+  gap: 10px;
+}
+
+.loader-dots span {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #7fe6c4, #f7c768);
+  animation: pulse 1s ease-in-out infinite;
+}
+
+.loader-dots span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+
+.loader-dots span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+
+.loader-label {
+  margin-top: 12px;
+  color: #e2e8f0;
+  font-weight: 700;
+  text-align: center;
+}
+
+.theme-light .loader-label {
+  color: var(--text);
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+  50% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
 .hero-pills {
   display: flex;
   gap: 8px;

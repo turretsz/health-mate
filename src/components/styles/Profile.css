@@ -57,9 +57,17 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid #1f2a3a;
   border-radius: 12px;
-  padding: 14px;
+  padding: 12px 14px;
   display: grid;
-  gap: 10px;
+  gap: 8px;
+  position: relative;
+}
+
+.pane-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
 }
 
 .theme-light .pane {
@@ -149,12 +157,13 @@
   background: linear-gradient(135deg, #7fe6c4, #f7c768);
   color: #04131f;
   border: none;
-  border-radius: 12px;
-  padding: 10px 12px;
+  border-radius: 10px;
+  padding: 6px 10px;
   font-weight: 800;
   cursor: pointer;
   box-shadow: 0 10px 22px rgba(127, 230, 196, 0.26);
   transition: transform 0.15s ease, box-shadow 0.2s ease;
+  font-size: 13px;
 }
 
 .profile-edit:hover {

@@ -1,10 +1,11 @@
 // src/components/HealthTracker.js
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../context/ToastContext';
 import './styles/HealthTracker.css';
 
+const BMI_STORAGE = 'hm_bmi_logs';
 const MIN_HEIGHT = 80;
 const MAX_HEIGHT = 250;
 const MIN_WEIGHT = 20;
@@ -84,6 +85,19 @@ const HealthTracker = () => {
   const [isSelf, setIsSelf] = useState(false);
   const chartRef = useRef(null);
 
+  const saveBmiForUser = useCallback((userId, entry) => {
+    if (!userId) return;
+    try {
+      const raw = localStorage.getItem(BMI_STORAGE);
+      const parsed = raw ? JSON.parse(raw) : {};
+      const existing = Array.isArray(parsed[userId]) ? parsed[userId] : [];
+      const next = [{ ...entry, ts: Date.now() }, ...existing].slice(0, 50);
+      localStorage.setItem(BMI_STORAGE, JSON.stringify({ ...parsed, [userId]: next }));
+    } catch (err) {
+      // best-effort; bỏ qua lỗi lưu
+    }
+  }, []);
+
   const userBirthDate = useMemo(() => {
     if (!user) return '';
     const found = users?.find((u) => u.id === user.id);
@@ -96,6 +110,8 @@ const HealthTracker = () => {
     return found?.gender || user?.gender || '';
   }, [user, users]);
 
+  const triggerBusy = () => window.dispatchEvent(new CustomEvent('hm-busy', { detail: { duration: 600 } }));
+
   useEffect(() => {
     if (isSelf && userBirthDate) {
       setBirthDate(userBirthDate);
@@ -106,6 +122,7 @@ const HealthTracker = () => {
   }, [isSelf, userBirthDate, userGender]);
 
   const calculateBMI = () => {
+    triggerBusy();
     const h = parseFloat(height);
     const w = parseFloat(weight);
     if (!birthDate || !h || !w) {
@@ -120,9 +137,30 @@ const HealthTracker = () => {
     setBmi(bmiValue.toFixed(1));
     setShowResult(true);
     setShowForm(false);
+    if (isSelf && user?.id) {
+      saveBmiForUser(user.id, {
+        bmi: parseFloat(bmiValue.toFixed(1)),
+        height: h,
+        weight: w,
+        gender,
+        birthDate,
+      });
+      // Thông báo ứng dụng cập nhật để trang chủ/snapshot đồng bộ ngay.
+      window.dispatchEvent(new Event('hm-data-updated'));
+    }
     setTimeout(() => {
       if (chartRef.current) chartRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 100);
+  };
+
+  const handleReset = () => {
+    setShowResult(false);
+    setShowForm(true);
+    setBmi(null);
+    setOpenIndex(null);
+    setHeight('');
+    setWeight('');
+    window.dispatchEvent(new CustomEvent('hm-busy', { detail: { duration: 400 } }));
   };
 
   return (
@@ -290,7 +328,7 @@ const HealthTracker = () => {
             </div>
 
             <div className="result-right">
-              <button type="button" className="reset-btn" onClick={() => setShowForm(true)} aria-label="Kiểm tra lại">
+              <button type="button" className="reset-btn" onClick={handleReset} aria-label="Kiểm tra lại">
                 ↺
               </button>
 
