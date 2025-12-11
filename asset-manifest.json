@@ -1,13 +1,13 @@
 {
   "files": {
-    "main.css": "/health-mate/static/css/main.b919d617.css",
-    "main.js": "/health-mate/static/js/main.e7f8f363.js",
+    "main.css": "/health-mate/static/css/main.d3d801df.css",
+    "main.js": "/health-mate/static/js/main.87b10606.js",
     "index.html": "/health-mate/index.html",
-    "main.b919d617.css.map": "/health-mate/static/css/main.b919d617.css.map",
-    "main.e7f8f363.js.map": "/health-mate/static/js/main.e7f8f363.js.map"
+    "main.d3d801df.css.map": "/health-mate/static/css/main.d3d801df.css.map",
+    "main.87b10606.js.map": "/health-mate/static/js/main.87b10606.js.map"
   },
   "entrypoints": [
-    "static/css/main.b919d617.css",
-    "static/js/main.e7f8f363.js"
+    "static/css/main.d3d801df.css",
+    "static/js/main.87b10606.js"
   ]
 }
