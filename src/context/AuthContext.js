@@ -118,8 +118,10 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem(SESSION_KEY);
     DATA_KEYS.forEach((k) => localStorage.removeItem(k));
     setUser(null);
-    // Reset app state on logout
-    window.location.href = '/';
+    // Reset app state on logout. Use PUBLIC_URL so GH Pages không bị 404.
+    const base = process.env.PUBLIC_URL || '';
+    const normalizedBase = base.endsWith('/') ? base.slice(0, -1) : base;
+    window.location.href = `${normalizedBase}/`;
   };
 
   const updateProfile = async (updates) => {
