@@ -98,17 +98,17 @@ const HomePage = ({ onLockedClick, bmiSnapshot, bmrSnapshot, hrSnapshot, statusS
               <div className="insight-card">
                 <div className="insight-label">BMR</div>
                 <div className="insight-value">{canBmr ? (bmrSnapshot?.value || '~') : '~'}</div>
-                <p className="insight-note">{canBmr ? (bmrSnapshot?.note || 'Chưa có dữ liệu.') : 'Chức năng đang khóa.'}</p>
+                <p className="insight-note">{canBmr ? (bmrSnapshot?.note || 'Chưa có dữ liệu.') : 'Chức năng đang trong quá trình phát triển.'}</p>
               </div>
               <div className="insight-card">
                 <div className="insight-label">Nhịp tim</div>
                 <div className="insight-value">{canHeart ? (hrSnapshot?.value || '~') : '~'}</div>
-                <p className="insight-note">{canHeart ? (hrSnapshot?.note || 'Chưa có dữ liệu.') : 'Chức năng đang khóa.'}</p>
+                <p className="insight-note">{canHeart ? (hrSnapshot?.note || 'Chưa có dữ liệu.') : 'Chức năng đang trong quá trình phát triển.'}</p>
               </div>
               <div className="insight-card secondary">
                 <div className="insight-label">Trạng thái</div>
                 <div className="insight-value">{canDashboard ? (statusSnapshot?.value || '~') : '~'}</div>
-                <p className="insight-note">{canDashboard ? (statusSnapshot?.note || 'Chưa có dữ liệu.') : 'Chức năng đang khóa.'}</p>
+                <p className="insight-note">{canDashboard ? (statusSnapshot?.note || 'Chưa có dữ liệu.') : 'Chức năng đang trong quá trình phát triển.'}</p>
               </div>
             </div>
           </div>
@@ -122,7 +122,7 @@ const HomePage = ({ onLockedClick, bmiSnapshot, bmrSnapshot, hrSnapshot, statusS
               <Link to="/dashboard" onClick={!canDashboard ? onLockedClick : undefined} className="link-inline">Mở nhật ký</Link>
             </div>
             <div className="session-list">
-              {(showActions ? actions : [{ name: '~', note: 'Nhật ký đang khóa, chưa có dữ liệu.', delta: '~' }]).map((item, idx) => (
+              {(showActions ? actions : [{ name: '~', note: 'Nhật ký đang trong quá trình phát triển, chưa có dữ liệu.', delta: '~' }]).map((item, idx) => (
                 <div className="session-row" key={`${item.name}-${idx}`}>
                   <div>
                     <div className="session-name">{item.name || '~'}</div>
@@ -240,7 +240,7 @@ const LockedFeature = ({ label }) => (
   <div className="locked-feature">
     <div className="page-width">
       <div className="locked-card">
-        <h1>{label} đang phát triển</h1>
+        <h1>{label} đang trong quá trình phát triển</h1>
         <p>Chức năng này đang được hoàn thiện. Vui lòng quay lại sau.</p>
         <Link to="/" className="btn btn-primary">Về trang chủ</Link>
       </div>
@@ -274,7 +274,7 @@ function AppShell() {
   });
   const handleLockedClick = useCallback((e) => {
     e.preventDefault();
-    notify('Chức năng đang phát triển, vui lòng quay lại sau.', { type: 'info' });
+    notify('Chức năng đang trong quá trình phát triển, vui lòng quay lại sau.', { type: 'info' });
   }, [notify]);
 
   const handleFeatureToggle = useCallback((key, value) => {
@@ -308,7 +308,7 @@ function AppShell() {
         bmr: null,
         hr: null,
         status: null,
-        actions: [{ name: '~', note: 'Nhật ký đang khóa, chưa có dữ liệu.', delta: '~' }],
+        actions: [{ name: '~', note: 'Nhật ký đang trong quá trình phát triển, chưa có dữ liệu.', delta: '~' }],
       }));
       return;
     }

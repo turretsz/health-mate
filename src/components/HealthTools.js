@@ -76,7 +76,7 @@ const HealthTools = ({ featureFlags = {} }) => {
   const handleToolClick = (tool) => (e) => {
     if (lockedPaths[tool.link]) {
       e.preventDefault();
-      notify('Chức năng đang phát triển, vui lòng quay lại sau.', { type: 'info' });
+      notify('Chức năng đang trong quá trình phát triển, vui lòng quay lại sau.', { type: 'info' });
     }
   };
 

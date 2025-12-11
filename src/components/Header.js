@@ -11,7 +11,7 @@ const Header = ({ theme = 'dark', toggleTheme, featureFlags = {} }) => {
   const { pathname } = useLocation();
   const handleLocked = (e) => {
     e.preventDefault();
-    notify('Chức năng đang phát triển, vui lòng quay lại sau.', { type: 'info' });
+    notify('Chức năng đang trong quá trình phát triển, vui lòng quay lại sau.', { type: 'info' });
   };
 
   return (
