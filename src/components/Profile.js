@@ -4,6 +4,16 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import './styles/Profile.css';
 
+const isWeakPassword = (value) => {
+  if (!value) return true;
+  const hasMinLength = value.length >= 8;
+  const hasLetter = /[a-zA-Z]/.test(value);
+  const hasNumber = /\d/.test(value);
+  const banned = ['123456', 'password', 'qwerty', '111111', '12345678', '123456789'];
+  const containsBanned = banned.some((p) => value.toLowerCase().includes(p));
+  return !(hasMinLength && hasLetter && hasNumber) || containsBanned;
+};
+
 const Profile = ({ featureFlags = {}, onToggleFeature }) => {
   const navigate = useNavigate();
   const { user, updateProfile, changePassword } = useAuth();
@@ -25,6 +35,14 @@ const Profile = ({ featureFlags = {}, onToggleFeature }) => {
   }
 
   const handleSave = async () => {
+    if (!form.name.trim()) {
+      setError('Tên không được để trống.');
+      return;
+    }
+    if (!form.email.trim()) {
+      setError('Email không được để trống.');
+      return;
+    }
     setSaving(true);
     setMessage('');
     setError('');
@@ -47,6 +65,10 @@ const Profile = ({ featureFlags = {}, onToggleFeature }) => {
   const handleChangePassword = async () => {
     if (!security.currentPassword || !security.newPassword) {
       setError('Vui lòng nhập đủ mật khẩu hiện tại và mật khẩu mới.');
+      return;
+    }
+    if (isWeakPassword(security.newPassword)) {
+      setError('Mật khẩu mới quá yếu. Hãy dùng tối thiểu 8 ký tự, gồm cả chữ và số và tránh chuỗi dễ đoán.');
       return;
     }
     setSaving(true);

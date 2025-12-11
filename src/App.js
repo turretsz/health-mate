@@ -18,6 +18,11 @@ import { useAuth } from './context/AuthContext';
 
 const FEATURE_KEY = 'hm_feature_flags';
 const defaultFeatures = { dashboard: false, bmr: false, heart: false };
+const defaultActionSuggestions = [
+  { name: 'Uống nước', note: 'Bổ sung 300ml nước sau khi thức dậy.', delta: '+300ml' },
+  { name: 'Vận động', note: 'Đi bộ nhanh 10 phút sau bữa trưa.', delta: '+10 phút' },
+  { name: 'Giãn cơ', note: 'Duỗi vai/cổ 2 phút khi ngồi lâu.', delta: '+2 phút' },
+];
 
 const HomePage = ({ onLockedClick, bmiSnapshot, bmrSnapshot, hrSnapshot, statusSnapshot, actions, featureFlags }) => {
   const canDashboard = !!featureFlags?.dashboard;
@@ -114,7 +119,7 @@ const HomePage = ({ onLockedClick, bmiSnapshot, bmrSnapshot, hrSnapshot, statusS
                 <p className="panel-subtitle">Nhật ký mới nhất</p>
                 <div className="panel-title">Bảng lịch hành động</div>
               </div>
-              <Link to="/dashboard" onClick={onLockedClick} className="link-inline">Mở nhật ký</Link>
+              <Link to="/dashboard" onClick={!canDashboard ? onLockedClick : undefined} className="link-inline">Mở nhật ký</Link>
             </div>
             <div className="session-list">
               {(showActions ? actions : [{ name: '~', note: 'Nhật ký đang khóa, chưa có dữ liệu.', delta: '~' }]).map((item, idx) => (
@@ -192,7 +197,7 @@ const HomePage = ({ onLockedClick, bmiSnapshot, bmrSnapshot, hrSnapshot, statusS
           </div>
           <div className="pill-filter">Realtime • Không cần tài khoản</div>
         </div>
-        <ToolCards />
+        <ToolCards featureFlags={featureFlags} />
       </div>
     </section>
 
@@ -221,8 +226,8 @@ const HomePage = ({ onLockedClick, bmiSnapshot, bmrSnapshot, hrSnapshot, statusS
             </p>
           </div>
           <div className="cta-actions">
-            <Link to="/dashboard" onClick={onLockedClick} className="btn btn-primary">Mở bảng điều khiển</Link>
-            <Link to="/bmr" onClick={onLockedClick} className="btn btn-ghost">Tính BMR ngay</Link>
+            <Link to="/dashboard" onClick={!featureFlags?.dashboard ? onLockedClick : undefined} className="btn btn-primary">Mở bảng điều khiển</Link>
+            <Link to="/bmr" onClick={!featureFlags?.bmr ? onLockedClick : undefined} className="btn btn-ghost">Tính BMR ngay</Link>
           </div>
         </div>
       </div>
@@ -354,9 +359,7 @@ function AppShell() {
               note: statusSnap.note || 'Đang đồng bộ dữ liệu.',
             }
           : null,
-        actions: actionsList.length
-          ? actionsList
-          : [{ name: '~', note: 'Nhật ký đang khóa, chưa có dữ liệu.', delta: '~' }],
+        actions: actionsList.length ? actionsList : defaultActionSuggestions,
       });
     } catch (err) {
       setSnapshots((prev) => ({
@@ -365,7 +368,7 @@ function AppShell() {
         bmr: null,
         hr: null,
         status: null,
-        actions: [{ name: '~', note: 'Nhật ký đang khóa, chưa có dữ liệu.', delta: '~' }],
+        actions: defaultActionSuggestions,
       }));
     }
   }, [user, classifyBmi]);

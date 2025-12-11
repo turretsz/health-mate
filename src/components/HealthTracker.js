@@ -154,7 +154,7 @@ const HealthTracker = () => {
     setBmi(bmiValue.toFixed(1));
     setShowResult(true);
     setShowForm(false);
-    if (isSelf && user?.id) {
+    if (user?.id) {
       saveBmiForUser(user.id, {
         bmi: parseFloat(bmiValue.toFixed(1)),
         height: h,
@@ -212,7 +212,17 @@ const HealthTracker = () => {
                     min="1"
                     max={MAX_AGE}
                     value={age}
-                    onChange={(e) => setAge(e.target.value)}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (val === '') {
+                        setAge('');
+                        return;
+                      }
+                      const num = parseInt(val, 10);
+                      if (Number.isNaN(num)) return;
+                      const clamped = Math.min(MAX_AGE, Math.max(1, num));
+                      setAge(String(clamped));
+                    }}
                     placeholder="Ví dụ: 30"
                     readOnly={isSelf && !!userAge}
                   />

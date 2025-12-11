@@ -24,6 +24,16 @@ const normalizeUser = (user) => {
   return { ...user, age };
 };
 
+const isWeakPassword = (value) => {
+  if (!value) return true;
+  const hasMinLength = value.length >= 8;
+  const hasLetter = /[a-zA-Z]/.test(value);
+  const hasNumber = /\d/.test(value);
+  const banned = ['123456', 'password', 'qwerty', '111111', '12345678', '123456789'];
+  const containsBanned = banned.some((p) => value.toLowerCase().includes(p));
+  return !(hasMinLength && hasLetter && hasNumber) || containsBanned;
+};
+
 const SESSION_KEY = 'hm_session';
 const USERS_KEY = 'hm_users';
 const DATA_KEYS = [
@@ -108,6 +118,10 @@ export const AuthProvider = ({ children }) => {
 
   const register = async ({ name, gender, birthDate, email, password }) => {
     await delay();
+    if (!name?.trim()) throw new Error('Tên không được để trống.');
+    if (!email?.trim()) throw new Error('Email không được để trống.');
+    if (!birthDate) throw new Error('Ngày sinh không được để trống.');
+    if (isWeakPassword(password)) throw new Error('Mật khẩu quá yếu.');
     const normalizedEmail = email.trim().toLowerCase();
     const exists = users.find((u) => u.email === normalizedEmail);
     if (exists) throw new Error('Email đã tồn tại.');
@@ -175,7 +189,6 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     localStorage.removeItem(SESSION_KEY);
-    DATA_KEYS.forEach((k) => localStorage.removeItem(k));
     setUser(null);
     // Reset app state on logout. Use PUBLIC_URL so GH Pages không bị 404.
     const base = process.env.PUBLIC_URL || '';
@@ -213,6 +226,7 @@ export const AuthProvider = ({ children }) => {
   const changePassword = async ({ currentPassword, newPassword }) => {
     await delay();
     if (!user) throw new Error('Chưa đăng nhập');
+    if (isWeakPassword(newPassword)) throw new Error('Mật khẩu mới quá yếu.');
     const match = users.find((u) => u.id === user.id);
     if (!match || match.password !== currentPassword) throw new Error('Mật khẩu hiện tại không đúng.');
     setUsers((prev) => {

@@ -7,7 +7,7 @@ const isWeakPassword = (value) => {
   const hasMinLength = value.length >= 8;
   const hasLetter = /[a-zA-Z]/.test(value);
   const hasNumber = /\d/.test(value);
-  const banned = ['123456', 'password', 'qwerty', '111111', '12345678'];
+  const banned = ['123456', 'password', 'qwerty', '111111', '12345678', '123456789'];
   const containsBanned = banned.some((p) => value.toLowerCase().includes(p));
   return !(hasMinLength && hasLetter && hasNumber) || containsBanned;
 };
