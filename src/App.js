@@ -40,23 +40,23 @@ const HomePage = () => (
             <span className="hero-pill ghost">Lưu & nhắc nhở ngay</span>
           </div>
 
-          <div className="hero-metrics-grid">
-            <div className="metric-card large">
-              <div className="metric-label">Luồng mỗi ngày</div>
-              <div className="metric-value">Hydrate • Move • Rest</div>
-              <p className="metric-note">Bản tóm tắt gọn gàng để bám sát tiến độ, không cần mở nhiều màn.</p>
+            <div className="hero-metrics-grid">
+              <div className="metric-card large">
+                <div className="metric-label">Luồng chính</div>
+                <div className="metric-value">Đăng nhập • Hồ sơ • BMI</div>
+                <p className="metric-note">Chỉ giữ lại các màn hình cốt lõi để kiểm thử ổn định.</p>
+              </div>
+              <div className="metric-card">
+                <div className="metric-label">BMI nhanh</div>
+                <div className="metric-value accent">21.8</div>
+                <p className="metric-note">Nhập chiều cao/cân nặng và xem ngay kết quả.</p>
+              </div>
+              <div className="metric-card">
+                <div className="metric-label">Hồ sơ</div>
+                <div className="metric-value accent">Thông tin cá nhân</div>
+                <p className="metric-note">Cập nhật lưu cục bộ, không cần backend.</p>
+              </div>
             </div>
-            <div className="metric-card">
-              <div className="metric-label">Công thức</div>
-              <div className="metric-value accent">Mifflin-St Jeor</div>
-              <p className="metric-note">Đã kèm phân vùng nhịp tim 50-85% cho tập luyện.</p>
-            </div>
-            <div className="metric-card">
-              <div className="metric-label">Kiểm tra nhanh</div>
-              <div className="metric-value accent">BMI • BMR • HR</div>
-              <p className="metric-note">Điền số liệu rồi xem ngay, không cần đăng nhập.</p>
-            </div>
-          </div>
         </div>
 
         <div className="hero-secondary">
