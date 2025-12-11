@@ -1,6 +1,29 @@
 // Lightweight auth context with HTTP API + local fallback.
 import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
 
+const deriveAge = (value) => {
+  if (value === undefined || value === null) return null;
+  const parsedNumber = parseInt(value, 10);
+  if (!Number.isNaN(parsedNumber) && parsedNumber > 0 && parsedNumber < 130) {
+    return parsedNumber;
+  }
+  const parsedDate = new Date(value);
+  if (!Number.isNaN(parsedDate.getTime())) {
+    const today = new Date();
+    let age = today.getFullYear() - parsedDate.getFullYear();
+    const monthDiff = today.getMonth() - parsedDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < parsedDate.getDate())) age--;
+    return age;
+  }
+  return null;
+};
+
+const normalizeUser = (user) => {
+  if (!user) return user;
+  const age = deriveAge(user.age ?? user.birthDate);
+  return { ...user, age };
+};
+
 const SESSION_KEY = 'hm_session';
 const USERS_KEY = 'hm_users';
 const DATA_KEYS = [
@@ -14,10 +37,10 @@ const DATA_KEYS = [
   'hm_status_snapshot',
 ];
 const seedUsers = [
-  { id: 1, name: 'Lan', email: 'lan@example.com', password: '123456', gender: 'female', birthDate: '1995-01-01', plan: 'Free' },
-  { id: 2, name: 'Minh', email: 'minh@example.com', password: '123456', gender: 'male', birthDate: '1992-02-02', plan: 'Pro' },
-  { id: 3, name: 'An', email: 'an@example.com', password: '123456', gender: 'female', birthDate: '1998-03-03', plan: 'Free' },
-  { id: 4, name: 'Admin', email: 'ad@admin.com', password: 'admin123', gender: 'male', birthDate: '1990-01-01', plan: 'Pro', role: 'admin' },
+  { id: 1, name: 'Lan', email: 'lan@example.com', password: '123456', gender: 'female', birthDate: '1995-01-01', age: deriveAge('1995-01-01'), plan: 'Free' },
+  { id: 2, name: 'Minh', email: 'minh@example.com', password: '123456', gender: 'male', birthDate: '1992-02-02', age: deriveAge('1992-02-02'), plan: 'Pro' },
+  { id: 3, name: 'An', email: 'an@example.com', password: '123456', gender: 'female', birthDate: '1998-03-03', age: deriveAge('1998-03-03'), plan: 'Free' },
+  { id: 4, name: 'Admin', email: 'ad@admin.com', password: 'admin123', gender: 'male', birthDate: '1990-01-01', age: deriveAge('1990-01-01'), plan: 'Pro', role: 'admin' },
 ];
 
 const AuthContext = createContext(null);
@@ -42,33 +65,38 @@ export const AuthProvider = ({ children }) => {
     const raw = localStorage.getItem(SESSION_KEY);
     if (raw) {
       try {
-        setUser(JSON.parse(raw));
+        const parsed = JSON.parse(raw);
+        setUser(normalizeUser(parsed));
       } catch (e) {
         setUser(null);
       }
     }
     try {
-      const saved = JSON.parse(localStorage.getItem(USERS_KEY) || '[]');
+      const saved = JSON.parse(localStorage.getItem(USERS_KEY) || '[]').map(normalizeUser);
       if (Array.isArray(saved) && saved.length) {
         setUsers(saved);
       } else {
-        setUsers(seedUsers);
-        localStorage.setItem(USERS_KEY, JSON.stringify(seedUsers));
+        const normalizedSeeds = seedUsers.map(normalizeUser);
+        setUsers(normalizedSeeds);
+        localStorage.setItem(USERS_KEY, JSON.stringify(normalizedSeeds));
       }
     } catch (e) {
-      setUsers(seedUsers);
-      localStorage.setItem(USERS_KEY, JSON.stringify(seedUsers));
+      const normalizedSeeds = seedUsers.map(normalizeUser);
+      setUsers(normalizedSeeds);
+      localStorage.setItem(USERS_KEY, JSON.stringify(normalizedSeeds));
     }
   }, []);
 
   const persistSession = (sessionUser) => {
-    setUser(sessionUser);
-    localStorage.setItem(SESSION_KEY, JSON.stringify(sessionUser));
+    const normalized = normalizeUser(sessionUser);
+    setUser(normalized);
+    localStorage.setItem(SESSION_KEY, JSON.stringify(normalized));
   };
 
   const persistUsers = (list) => {
-    setUsers(list);
-    localStorage.setItem(USERS_KEY, JSON.stringify(list));
+    const normalized = list.map(normalizeUser);
+    setUsers(normalized);
+    localStorage.setItem(USERS_KEY, JSON.stringify(normalized));
   };
 
   const openAuth = (nextMode = 'login') => {
@@ -83,11 +111,13 @@ export const AuthProvider = ({ children }) => {
     const normalizedEmail = email.trim().toLowerCase();
     const exists = users.find((u) => u.email === normalizedEmail);
     if (exists) throw new Error('Email đã tồn tại.');
+    const computedAge = deriveAge(birthDate);
     const newUser = {
       id: Date.now(),
       name: name.trim(),
       gender,
       birthDate,
+      age: computedAge,
       email: normalizedEmail,
       password,
       plan: 'Free',
@@ -95,7 +125,16 @@ export const AuthProvider = ({ children }) => {
     };
     const nextUsers = [...users, newUser];
     persistUsers(nextUsers);
-    persistSession({ id: newUser.id, name: newUser.name, email: newUser.email, plan: newUser.plan, role: newUser.role });
+    persistSession({
+      id: newUser.id,
+      name: newUser.name,
+      email: newUser.email,
+      plan: newUser.plan,
+      role: newUser.role,
+      gender: newUser.gender,
+      birthDate: newUser.birthDate,
+      age: newUser.age,
+    });
   };
 
   const login = async ({ email, password }) => {
@@ -103,7 +142,16 @@ export const AuthProvider = ({ children }) => {
     const normalizedEmail = email.trim().toLowerCase();
     const match = users.find((u) => u.email === normalizedEmail && u.password === password);
     if (!match) throw new Error('Sai email hoặc mật khẩu.');
-    persistSession({ id: match.id, name: match.name, email: match.email, plan: match.plan, role: match.role });
+    persistSession({
+      id: match.id,
+      name: match.name,
+      email: match.email,
+      plan: match.plan,
+      role: match.role,
+      gender: match.gender,
+      birthDate: match.birthDate,
+      age: match.age,
+    });
   };
 
   const socialLogin = async (provider) => {
@@ -117,6 +165,8 @@ export const AuthProvider = ({ children }) => {
       email: `${provider}-${Date.now()}@example.com`,
       plan: 'Free',
       role: 'user',
+      birthDate: null,
+      age: null,
     };
     const nextUsers = [...users, pseudo];
     persistUsers(nextUsers);
@@ -143,7 +193,7 @@ export const AuthProvider = ({ children }) => {
       updates.email = normalizedEmail;
     }
     setUsers((prev) => {
-      const next = prev.map((u) => (u.id === user.id ? { ...u, ...updates } : u));
+      const next = prev.map((u) => (u.id === user.id ? { ...u, ...updates, age: deriveAge(updates.birthDate ?? u.birthDate ?? u.age) } : u));
       persistUsers(next);
       const updated = next.find((u) => u.id === user.id);
       persistSession({
@@ -154,6 +204,7 @@ export const AuthProvider = ({ children }) => {
         role: updated.role,
         gender: updated.gender,
         birthDate: updated.birthDate,
+        age: updated.age,
       });
       return next;
     });

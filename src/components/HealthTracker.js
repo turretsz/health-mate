@@ -10,6 +10,22 @@ const MIN_HEIGHT = 80;
 const MAX_HEIGHT = 250;
 const MIN_WEIGHT = 20;
 const MAX_WEIGHT = 250;
+const MAX_AGE = 120;
+
+const parseAge = (value) => {
+  if (value === undefined || value === null) return null;
+  const num = parseInt(value, 10);
+  if (!Number.isNaN(num) && num > 0 && num <= MAX_AGE) return num;
+  const parsedDate = new Date(value);
+  if (!Number.isNaN(parsedDate.getTime())) {
+    const today = new Date();
+    let age = today.getFullYear() - parsedDate.getFullYear();
+    const monthDiff = today.getMonth() - parsedDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < parsedDate.getDate())) age--;
+    return age > 0 && age <= MAX_AGE ? age : null;
+  }
+  return null;
+};
 
 const infoItems = [
   {
@@ -74,7 +90,7 @@ const HealthTracker = () => {
   const { user, users } = useAuth();
   const { notify } = useToast();
   const navigate = useNavigate();
-  const [birthDate, setBirthDate] = useState('');
+  const [age, setAge] = useState('');
   const [gender, setGender] = useState('male');
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
@@ -98,10 +114,10 @@ const HealthTracker = () => {
     }
   }, []);
 
-  const userBirthDate = useMemo(() => {
+  const userAge = useMemo(() => {
     if (!user) return '';
     const found = users?.find((u) => u.id === user.id);
-    return found?.birthDate || user?.birthDate || '';
+    return parseAge(found?.age ?? found?.birthDate ?? user?.age ?? user?.birthDate) ?? '';
   }, [user, users]);
 
   const userGender = useMemo(() => {
@@ -113,20 +129,21 @@ const HealthTracker = () => {
   const triggerBusy = () => window.dispatchEvent(new CustomEvent('hm-busy', { detail: { duration: 600 } }));
 
   useEffect(() => {
-    if (isSelf && userBirthDate) {
-      setBirthDate(userBirthDate);
+    if (isSelf && userAge) {
+      setAge(userAge);
     }
     if (isSelf && userGender) {
       setGender(userGender);
     }
-  }, [isSelf, userBirthDate, userGender]);
+  }, [isSelf, userAge, userGender]);
 
   const calculateBMI = () => {
     triggerBusy();
     const h = parseFloat(height);
     const w = parseFloat(weight);
-    if (!birthDate || !h || !w) {
-      notify('Vui lòng nhập đầy đủ ngày sinh, chiều cao và cân nặng.', { type: 'warning' });
+    const ageValue = parseAge(age);
+    if (!ageValue || !h || !w) {
+      notify('Vui lòng nhập đầy đủ tuổi, chiều cao và cân nặng.', { type: 'warning' });
       return;
     }
     if (h < MIN_HEIGHT || h > MAX_HEIGHT || w < MIN_WEIGHT || w > MAX_WEIGHT) {
@@ -143,7 +160,7 @@ const HealthTracker = () => {
         height: h,
         weight: w,
         gender,
-        birthDate,
+        age: ageValue,
       });
       // Thông báo ứng dụng cập nhật để trang chủ/snapshot đồng bộ ngay.
       window.dispatchEvent(new Event('hm-data-updated'));
@@ -187,15 +204,17 @@ const HealthTracker = () => {
               </div>
 
               <form className="bmi-form" onSubmit={(e) => e.preventDefault()}>
-                <label className="field-label" htmlFor="birthdate">Ngày sinh của bạn</label>
+                <label className="field-label" htmlFor="age">Tuổi của bạn</label>
                 <div className="input-shell">
                   <input
-                    id="birthdate"
-                    type="date"
-                    value={birthDate}
-                    onChange={(e) => setBirthDate(e.target.value)}
-                    placeholder="DD/MM/YYYY"
-                    readOnly={isSelf && !!userBirthDate}
+                    id="age"
+                    type="number"
+                    min="1"
+                    max={MAX_AGE}
+                    value={age}
+                    onChange={(e) => setAge(e.target.value)}
+                    placeholder="Ví dụ: 30"
+                    readOnly={isSelf && !!userAge}
                   />
                 </div>
 

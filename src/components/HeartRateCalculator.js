@@ -8,29 +8,35 @@ import './styles/HeartRateCalculator.css';
 const HR_STORAGE = 'hm_hr_logs';
 const clamp = (val, min, max) => Math.min(max, Math.max(min, val));
 
-const calculateAge = (dob) => {
-  if (!dob) return null;
-  const birth = new Date(dob);
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const m = today.getMonth() - birth.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-  return age;
+const MAX_AGE = 120;
+const parseAge = (value) => {
+  if (value === undefined || value === null) return null;
+  const num = parseInt(value, 10);
+  if (!Number.isNaN(num) && num > 0 && num <= MAX_AGE) return num;
+  const parsedDate = new Date(value);
+  if (!Number.isNaN(parsedDate.getTime())) {
+    const today = new Date();
+    let age = today.getFullYear() - parsedDate.getFullYear();
+    const monthDiff = today.getMonth() - parsedDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < parsedDate.getDate())) age--;
+    return age > 0 && age <= MAX_AGE ? age : null;
+  }
+  return null;
 };
 
 const HeartRateCalculator = () => {
   const { user, users } = useAuth();
   const { notify } = useToast();
-  const [birthDate, setBirthDate] = useState('');
+  const [age, setAge] = useState('');
   const [gender, setGender] = useState('male');
   const [resting, setResting] = useState(60);
   const [showResult, setShowResult] = useState(false);
   const [isSelf, setIsSelf] = useState(false);
 
-  const userBirthDate = useMemo(() => {
+  const userAge = useMemo(() => {
     if (!user) return '';
     const found = users?.find((u) => u.id === user.id);
-    return found?.birthDate || user?.birthDate || '';
+    return parseAge(found?.age ?? found?.birthDate ?? user?.age ?? user?.birthDate) ?? '';
   }, [user, users]);
 
   const userGender = useMemo(() => {
@@ -40,16 +46,16 @@ const HeartRateCalculator = () => {
   }, [user, users]);
 
   useEffect(() => {
-    if (isSelf && userBirthDate) setBirthDate(userBirthDate);
+    if (isSelf && userAge) setAge(userAge);
     if (isSelf && userGender) setGender(userGender);
-  }, [isSelf, userBirthDate, userGender]);
+  }, [isSelf, userAge, userGender]);
 
-  const age = useMemo(() => calculateAge(birthDate), [birthDate]);
+  const ageValue = useMemo(() => parseAge(age), [age]);
 
   const maxHeartRate = useMemo(() => {
-    if (!age || age <= 0) return null;
-    return 220 - age; // common max HR estimate
-  }, [age]);
+    if (!ageValue || ageValue <= 0) return null;
+    return 220 - ageValue; // common max HR estimate
+  }, [ageValue]);
 
   const zones = useMemo(() => {
     if (!maxHeartRate) return null;
@@ -62,8 +68,8 @@ const HeartRateCalculator = () => {
 
   const handleSubmit = () => {
     window.dispatchEvent(new CustomEvent('hm-busy', { detail: { duration: 600 } }));
-    if (!birthDate || !resting || resting <= 0) {
-      notify('Vui lòng nhập ngày sinh và nhịp tim nghỉ ngơi.', { type: 'warning' });
+    if (!ageValue || !resting || resting <= 0) {
+      notify('Vui lòng nhập tuổi và nhịp tim nghỉ ngơi.', { type: 'warning' });
       return;
     }
     if (resting < 30 || resting > 120) {
@@ -116,13 +122,15 @@ const HeartRateCalculator = () => {
         <div className="hr-card">
           <div className="hr-row">
             <div className="field">
-              <label>Ngày sinh của bạn</label>
+              <label>Tuổi của bạn</label>
               <input
-                type="date"
-                value={birthDate}
-                onChange={(e) => setBirthDate(e.target.value)}
-                placeholder="DD/MM/YYYY"
-                readOnly={isSelf && !!userBirthDate}
+                type="number"
+                min="1"
+                max={MAX_AGE}
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                placeholder="Ví dụ: 30"
+                readOnly={isSelf && !!userAge}
               />
             </div>
             <div className="field inline">

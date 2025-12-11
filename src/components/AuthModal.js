@@ -2,8 +2,18 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import './styles/AuthModal.css';
 
+const isWeakPassword = (value) => {
+  if (!value) return true;
+  const hasMinLength = value.length >= 8;
+  const hasLetter = /[a-zA-Z]/.test(value);
+  const hasNumber = /\d/.test(value);
+  const banned = ['123456', 'password', 'qwerty', '111111', '12345678'];
+  const containsBanned = banned.some((p) => value.toLowerCase().includes(p));
+  return !(hasMinLength && hasLetter && hasNumber) || containsBanned;
+};
+
 const AuthModal = () => {
-  const { isOpen, closeAuth, mode, setMode, login, register, socialLogin } = useAuth();
+  const { isOpen, closeAuth, mode, setMode, login, register } = useAuth();
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [registerForm, setRegisterForm] = useState({
     name: '',
@@ -55,6 +65,10 @@ const AuthModal = () => {
       setError('Ngày sinh không hợp lệ');
       return;
     }
+    if (isWeakPassword(registerForm.password)) {
+      setError('Mật khẩu quá yếu. Hãy dùng tối thiểu 8 ký tự, gồm cả chữ và số và không chứa chuỗi dễ đoán.');
+      return;
+    }
     setSubmitting(true);
     setError('');
     try {
@@ -72,19 +86,6 @@ const AuthModal = () => {
         ? 'Không thể kết nối máy chủ đăng ký. Kiểm tra lại kết nối hoặc API_URL.'
         : msg;
       setError(friendly);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const handleSocial = async (provider) => {
-    setSubmitting(true);
-    setError('');
-    try {
-      await socialLogin(provider);
-      closeAuth();
-    } catch (err) {
-      setError(err.message || 'Không thể kết nối, thử lại sau.');
     } finally {
       setSubmitting(false);
     }
@@ -181,19 +182,6 @@ const AuthModal = () => {
               <button type="submit" className="auth-primary" disabled={submitting}>
                 {submitting ? 'Đang xử lý...' : 'Đăng nhập'}
               </button>
-              <div className="auth-or">
-                <span></span>
-                <span>Hoặc tiếp tục bằng</span>
-                <span></span>
-              </div>
-              <div className="auth-social">
-                <button type="button" onClick={() => handleSocial('google')} disabled={submitting}>
-                  Google
-                </button>
-                <button type="button" onClick={() => handleSocial('facebook')} disabled={submitting}>
-                  Facebook
-                </button>
-              </div>
             </form>
           ) : (
             <form className="auth-form" onSubmit={handleRegister}>
@@ -235,6 +223,7 @@ const AuthModal = () => {
                   value={registerForm.birthDate}
                   onChange={(e) => setRegisterForm({ ...registerForm, birthDate: e.target.value })}
                   required
+                  placeholder="YYYY-MM-DD"
                 />
               </label>
               <label className="auth-field">

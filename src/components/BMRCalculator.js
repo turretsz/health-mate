@@ -14,31 +14,37 @@ const activityLevels = [
   { label: 'Rất tích cực (rất năng động & công việc đòi hỏi thể lực)', value: 1.9 },
 ];
 
-const calculateAge = (dob) => {
-  if (!dob) return null;
-  const birth = new Date(dob);
-  const today = new Date();
-  let age = today.getFullYear() - birth.getFullYear();
-  const m = today.getMonth() - birth.getMonth();
-  if (m < 0 || (m === 0 && today.getDate() < birth.getDate())) age--;
-  return age;
+const MAX_AGE = 120;
+const parseAge = (value) => {
+  if (value === undefined || value === null) return null;
+  const num = parseInt(value, 10);
+  if (!Number.isNaN(num) && num > 0 && num <= MAX_AGE) return num;
+  const parsedDate = new Date(value);
+  if (!Number.isNaN(parsedDate.getTime())) {
+    const today = new Date();
+    let age = today.getFullYear() - parsedDate.getFullYear();
+    const m = today.getMonth() - parsedDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < parsedDate.getDate())) age--;
+    return age > 0 && age <= MAX_AGE ? age : null;
+  }
+  return null;
 };
 
 const BMRCalculator = () => {
   const { user, users } = useAuth();
   const { notify } = useToast();
   const [gender, setGender] = useState('male');
-  const [birthDate, setBirthDate] = useState('');
+  const [age, setAge] = useState('');
   const [height, setHeight] = useState('');
   const [weight, setWeight] = useState('');
   const [activity, setActivity] = useState(activityLevels[0].value);
   const [showResult, setShowResult] = useState(false);
   const [isSelf, setIsSelf] = useState(false);
 
-  const userBirthDate = useMemo(() => {
+  const userAge = useMemo(() => {
     if (!user) return '';
     const found = users?.find((u) => u.id === user.id);
-    return found?.birthDate || user?.birthDate || '';
+    return parseAge(found?.age ?? found?.birthDate ?? user?.age ?? user?.birthDate) ?? '';
   }, [user, users]);
 
   const userGender = useMemo(() => {
@@ -48,22 +54,22 @@ const BMRCalculator = () => {
   }, [user, users]);
 
   useEffect(() => {
-    if (isSelf && userBirthDate) setBirthDate(userBirthDate);
+    if (isSelf && userAge) setAge(userAge);
     if (isSelf && userGender) setGender(userGender);
-  }, [isSelf, userBirthDate, userGender]);
+  }, [isSelf, userAge, userGender]);
 
-  const age = useMemo(() => calculateAge(birthDate), [birthDate]);
+  const ageValue = useMemo(() => parseAge(age), [age]);
 
   const bmr = useMemo(() => {
     const h = parseFloat(height);
     const w = parseFloat(weight);
-    if (!h || !w || !age || age <= 0) return null;
+    if (!h || !w || !ageValue || ageValue <= 0) return null;
     // Mifflin-St Jeor (độ chính xác cao)
     if (gender === 'male') {
-      return 10 * w + 6.25 * h - 5 * age + 5;
+      return 10 * w + 6.25 * h - 5 * ageValue + 5;
     }
-    return 10 * w + 6.25 * h - 5 * age - 161;
-  }, [gender, height, weight, age]);
+    return 10 * w + 6.25 * h - 5 * ageValue - 161;
+  }, [gender, height, weight, ageValue]);
 
   const tdee = useMemo(() => (bmr ? bmr * activity : null), [bmr, activity]);
 
@@ -76,8 +82,8 @@ const BMRCalculator = () => {
     window.dispatchEvent(new CustomEvent('hm-busy', { detail: { duration: 600 } }));
     const h = parseFloat(height);
     const w = parseFloat(weight);
-    if (!birthDate || !h || !w) {
-      notify('Vui lòng nhập đầy đủ ngày sinh, chiều cao và cân nặng.', { type: 'warning' });
+    if (!ageValue || !h || !w) {
+      notify('Vui lòng nhập đầy đủ tuổi, chiều cao và cân nặng.', { type: 'warning' });
       return;
     }
     if (h < MIN_HEIGHT || h > MAX_HEIGHT || w < MIN_WEIGHT || w > MAX_WEIGHT) {
@@ -94,6 +100,7 @@ const BMRCalculator = () => {
         const payload = {
           bmr: Math.round(bmr),
           tdee: Math.round(tdee),
+          age: ageValue,
           activity,
           activityLabel,
           ts: Date.now(),
@@ -153,13 +160,15 @@ const BMRCalculator = () => {
                 </button>
               </div>
               <div className="field label-inline">
-                <span>Ngày sinh của bạn</span>
+                <span>Tuổi của bạn</span>
                 <input
-                  type="date"
-                  value={birthDate}
-                  onChange={(e) => setBirthDate(e.target.value)}
-                  placeholder="DD/MM/YYYY"
-                  readOnly={isSelf && !!userBirthDate}
+                  type="number"
+                  min="1"
+                  max={MAX_AGE}
+                  value={age}
+                  onChange={(e) => setAge(e.target.value)}
+                  placeholder="Ví dụ: 30"
+                  readOnly={isSelf && !!userAge}
                 />
               </div>
             </div>
